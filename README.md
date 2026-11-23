@@ -1,4 +1,3 @@
-Markdown
 # Rota Vital — Arquitetura Serverless (AWS SAM + Lambda)
 
 > **Instituição:** CESAR School  
@@ -39,67 +38,88 @@ rota-vital-serverless/
 │   └── requirements.txt            # Dependências da função
 ├── template.yaml                   # Infraestrutura como Código (IaC) AWS SAM
 └── README.md                       # Documentação acadêmica e análise das evidências
-Tecnologias e Execução Local
-Linguagem / Runtime: Python 3.12
+```
 
-Infraestrutura como Código (IaC): AWS SAM (template.yaml)
+---
 
-Emulação Local: AWS SAM CLI + Docker Desktop
+## Tecnologias e Execução Local
 
-Comandos Utilizados
-Build do pacote da aplicação:
+* **Linguagem / Runtime:** Python 3.12
+* **Infraestrutura como Código (IaC):** AWS SAM (`template.yaml`)
+* **Emulação Local:** AWS SAM CLI + Docker Desktop
 
-Bash
-sam build
-Invocação direta da função Lambda (sem API Gateway):
+### Comandos Utilizados
 
-Bash
-sam local invoke HelloWorldFunction -e events/event.json
-Inicialização da API HTTP local:
+1. **Build do pacote da aplicação:**
+   ```bash
+   sam build
+   ```
 
-Bash
-sam local start-api
-Evidências e Análise dos Experimentos
-1. Invocação Direta com Payload Válido (HTTP 201)
-Arquivo: evidencias/01-invoke-201.png
+2. **Invocação direta da função Lambda (sem API Gateway):**
+   ```bash
+   sam local invoke HelloWorldFunction -e events/event.json
+   ```
 
-Procedimento: Execução direta da função via CLI com sam local invoke HelloWorldFunction -e events/event.json.
+3. **Inicialização da API HTTP local:**
+   ```bash
+   sam local start-api
+   ```
 
-Comportamento observado: A função Lambda interpretou o JSON de entrada, processou a requisição hospitalar, gerou o identificador da guia (G-REQ-...) e retornou status HTTP 201 Created.
+---
 
-2. Invocação Direta com Payload Inválido (HTTP 400)
-Arquivo: evidencias/02-invoke-400.png
+## Evidências e Análise dos Experimentos
 
-Procedimento: Execução de sam local invoke HelloWorldFunction -e events/event-invalido.json contendo "body": "{}".
+### 1. Invocação Direta com Payload Válido (HTTP 201)
+* **Procedimento:** Execução direta da função via CLI com `sam local invoke HelloWorldFunction -e events/event.json`.
+* **Comportamento observado:** A função Lambda interpretou o JSON de entrada, processou a requisição hospitalar, gerou o identificador da guia (`G-REQ-...`) e retornou status HTTP `201 Created`.
 
-Comportamento observado: A camada de validação rejeitou a requisição por ausência do campo obrigatório requisicaoId, retornando status HTTP 400 Bad Request e impedindo o processamento indevido.
+![Evidência 01 - Invocação direta retornando HTTP 201 Created](./evidencias/01-invoke-201.png)
 
-3. Estado em Memória (Warm Start) vs. Inicialização a Frio (Cold Start)
-Arquivos: 03a-start-api.png, 03b-estado-warm.png, 03c-coldstart-server.png e 03d-coldstart-client.png
+---
 
-Análise Técnica:
+### 2. Invocação Direta com Payload Inválido (HTTP 400)
+* **Procedimento:** Execução de `sam local invoke HelloWorldFunction -e events/event-invalido.json` contendo `"body": "{}"`.
+* **Comportamento observado:** A camada de validação rejeitou a requisição por ausência do campo obrigatório `requisicaoId`, retornando status HTTP `400 Bad Request` e impedindo o processamento indevido.
 
-Variáveis declaradas fora do escopo do lambda_handler permanecem alocadas na memória do contêiner enquanto o ambiente de execução estiver ativo (warm). Na primeira chamada HTTP, invocacaoNesteAmbiente retornou 1; na segunda chamada consecutiva, retornou 2.
+![Evidência 02 - Invocação direta retornando HTTP 400 Bad Request](./evidencias/02-invoke-400.png)
 
-Ao encerrar o servidor (Ctrl + C) e reiniciar o sam local start-api, um novo contêiner Docker (SAM_CONTAINER_ID) foi provisionado do zero (cold start), reiniciando o contador em memória para 1. Isso evidencia que funções serverless são stateless por arquitetura e não garantem persistência em memória local entre ciclos de vida distintos.
+---
 
-4. Limite de Tempo de Execução (Timeout de 3 Segundos)
-Arquivos: evidencias/04a-timeout-client.png e evidencias/04b-timeout-log.png
+### 3. Estado em Memória (*Warm Start*) vs. Inicialização a Frio (*Cold Start*)
+* **Análise Técnica:**
+  * Variáveis declaradas fora do escopo do `lambda_handler` permanecem alocadas na memória do contêiner enquanto o ambiente de execução estiver ativo (*warm*). Na primeira chamada HTTP, `invocacaoNesteAmbiente` retornou `1`; na segunda chamada consecutiva, retornou `2`.
+  * Ao encerrar o servidor (`Ctrl + C`) e reiniciar o `sam local start-api`, um novo contêiner Docker (`SAM_CONTAINER_ID`) foi provisionado do zero (*cold start*), reiniciando o contador em memória para `1`. Isso evidencia que funções serverless são **stateless** por arquitetura e não garantem persistência em memória local entre ciclos de vida distintos.
 
-Procedimento: Envio de requisição HTTP POST /guias com "demorar": true para forçar um tempo de processamento superior ao limite Timeout: 3 definido no template.yaml.
+![Evidência 03a - Inicialização do servidor local AWS SAM](./evidencias/03a-start-api.png)
 
-Análise Técnica: Exatamente após 3 segundos, o runtime interrompeu forçadamente a execução (Function 'HelloWorldFunction' timed out after 3 seconds), e o API Gateway local retornou {"message":"Internal server error"} ao cliente.
+![Evidência 03b - Retenção de estado em memória (Warm Start)](./evidencias/03b-estado-warm.png)
 
-5. Comportamento de Concorrência
-Arquivo: evidencias/05-concorrencia.png
+![Evidência 03c - Reinício do contêiner no servidor (Cold Start)](./evidencias/03c-coldstart-server.png)
 
-Procedimento: Disparo simultâneo de duas requisições via PowerShell utilizando Start-Job (REQ-1 lenta com demorar: true em segundo plano e REQ-2 imediata em primeiro plano).
+![Evidência 03d - Reset do contador em memória no cliente (Cold Start)](./evidencias/03d-coldstart-client.png)
 
-Análise Técnica: Enquanto na nuvem AWS o serviço Lambda escala horizontalmente provisionando instâncias isoladas em paralelo para atender picos simultâneos, a emulação local com sam local start-api processa as requisições em fila no contêiner local: a REQ-2 foi atendida normalmente (G-REQ-2, invocacaoNesteAmbiente: 1) enquanto o Job1 (REQ-1) estourou o timeout de 3 segundos (Internal server error), comprovado pelo comando Receive-Job -Id 1.
+---
 
-6. Validação de Contrato HTTP via API Gateway Local
-Arquivo: evidencias/06-validacao-payload.png
+### 4. Limite de Tempo de Execução (*Timeout* de 3 Segundos)
+* **Procedimento:** Envio de requisição HTTP `POST /guias` com `"demorar": true` para forçar um tempo de processamento superior ao limite `Timeout: 3` definido no `template.yaml`.
+* **Análise Técnica:** Exatamente após 3 segundos, o runtime interrompeu forçadamente a execução (`Function 'HelloWorldFunction' timed out after 3 seconds`), e o API Gateway local retornou `{"message":"Internal server error"}` ao cliente.
 
-Procedimento: Envio de POST http://127.0.0.1:3000/guias com corpo JSON vazio ({}).
+![Evidência 04a - Erro de Timeout recebido pelo cliente](./evidencias/04a-timeout-client.png)
 
-Análise Técnica: A integração HTTP repassou o evento ao handler Lambda, que validou o contrato de entrada e devolveu o erro semântico {"erro": "requisicaoId obrigatório"} com status HTTP 400 Bad Request.
+![Evidência 04b - Log de Timeout no servidor SAM](./evidencias/04b-timeout-log.png)
+
+---
+
+### 5. Comportamento de Concorrência
+* **Procedimento:** Disparo simultâneo de duas requisições via PowerShell utilizando `Start-Job` (`REQ-1` lenta com `demorar: true` em segundo plano e `REQ-2` imediata em primeiro plano).
+* **Análise Técnica:** Enquanto na nuvem AWS o serviço Lambda escala horizontalmente provisionando instâncias isoladas em paralelo para atender picos simultâneos, a emulação local com `sam local start-api` processa as requisições em fila no contêiner local: a `REQ-2` foi atendida normalmente (`G-REQ-2`, `invocacaoNesteAmbiente: 1`) enquanto o `Job1` (`REQ-1`) estourou o timeout de 3 segundos (`Internal server error`), comprovado pelo comando `Receive-Job -Id 1`.
+
+![Evidência 05 - Teste de concorrência local com Start-Job](./evidencias/05-concorrencia.png)
+
+---
+
+### 6. Validação de Contrato HTTP via API Gateway Local
+* **Procedimento:** Envio de `POST http://127.0.0.1:3000/guias` com corpo JSON vazio (`{}`).
+* **Análise Técnica:** A integração HTTP repassou o evento ao handler Lambda, que validou o contrato de entrada e devolveu o erro semântico `{"erro": "requisicaoId obrigatório"}` com status HTTP `400 Bad Request`.
+
+![Evidência 06 - Validação de payload vazio via HTTP](./evidencias/06-validacao-payload.png)
