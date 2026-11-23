@@ -1,130 +1,124 @@
-# rota-vital-serverless
+# Rota Vital — Arquitetura Serverless (AWS SAM + Lambda)
 
-This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
+> **Instituição:** CESAR School  
+> **Curso:** Análise e Desenvolvimento de Sistemas (ADS) — 3º Período (Turma Embarque)  
+> **Período Letivo:** 2026.2  
+> **Disciplina:** Infraestrutura de Software  
+> **Discente:** Letícia Gomes da Silva  
+> **Docente:** Raoni Monteiro de Oliveira  
 
-- hello_world - Code for the application's Lambda function.
-- events - Invocation events that you can use to invoke the function.
-- tests - Unit tests for the application code. 
-- template.yaml - A template that defines the application's AWS resources.
+---
 
-The application uses several AWS resources, including Lambda functions and an API Gateway API. These resources are defined in the `template.yaml` file in this project. You can update the template to add AWS resources through the same deployment process that updates your application code.
+## Visão Geral do Projeto
 
-If you prefer to use an integrated development environment (IDE) to build and test your application, you can use the AWS Toolkit.  
-The AWS Toolkit is an open source plug-in for popular IDEs that uses the SAM CLI to build and deploy serverless applications on AWS. The AWS Toolkit also adds a simplified step-through debugging experience for Lambda function code. See the following links to get started.
+Protótipo de microsserviço serverless desenvolvido com **AWS SAM (Serverless Application Model)** e **Python 3.12** para emissão e validação de guias de requisição hospitalar (`POST /guias`). O experimento demonstra na prática os conceitos fundamentais de computação sem servidor (FaaS): **execução isolada**, **retenção de estado em memória (*warm start*)**, **inicialização a frio (*cold start*)**, **limites de tempo de execução (*timeout*)**, **concorrência** e **validação de contratos HTTP**.
 
-* [CLion](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [GoLand](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [IntelliJ](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [WebStorm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [Rider](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [PhpStorm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [PyCharm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [RubyMine](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [DataGrip](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
-* [Visual Studio](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/welcome.html)
+---
 
-## Deploy the sample application
+## Estrutura do Repositório
 
-The Serverless Application Model Command Line Interface (SAM CLI) is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.
+```text
+rota-vital-serverless/
+├── events/
+│   ├── event.json                  # Payload válido de requisição hospitalar
+│   └── event-invalido.json         # Payload vazio para teste de validação (HTTP 400)
+├── evidencias/                     # Capturas de tela dos 6 experimentos realizados
+│   ├── 01-invoke-201.png
+│   ├── 02-invoke-400.png
+│   ├── 03a-start-api.png
+│   ├── 03b-estado-warm.png
+│   ├── 03c-coldstart-server.png
+│   ├── 03d-coldstart-client.png
+│   ├── 04a-timeout-client.png
+│   ├── 04b-timeout-log.png
+│   ├── 05-concorrencia.png
+│   └── 06-validacao-payload.png
+├── hello_world/
+│   ├── app.py                      # Handler da função AWS Lambda (Python 3.12)
+│   └── requirements.txt            # Dependências da função
+├── template.yaml                   # Infraestrutura como Código (IaC) AWS SAM
+└── README.md                       # Documentação acadêmica e análise
+Tecnologias e Execução Local
+Linguagem / Runtime: Python 3.12
 
-To use the SAM CLI, you need the following tools.
+Infraestrutura como Código (IaC): AWS SAM (template.yaml)
 
-* SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-* [Python 3 installed](https://www.python.org/downloads/)
-* Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
+Emulação Local: AWS SAM CLI + Docker Desktop
 
-To build and deploy your application for the first time, run the following in your shell:
+Comandos Utilizados
+Build do pacote da aplicação:
 
-```bash
-sam build --use-container
-sam deploy --guided
-```
+Bash
+sam build
+Invocação direta da função Lambda (sem API Gateway):
 
-The first command will build the source of your application. The second command will package and deploy your application to AWS, with a series of prompts:
+Bash
+sam local invoke HelloWorldFunction -e events/event.json
+Inicialização da API HTTP local:
 
-* **Stack Name**: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
-* **AWS Region**: The AWS region you want to deploy your app to.
-* **Confirm changes before deploy**: If set to yes, any change sets will be shown to you before execution for manual review. If set to no, the AWS SAM CLI will automatically deploy application changes.
-* **Allow SAM CLI IAM role creation**: Many AWS SAM templates, including this example, create AWS IAM roles required for the AWS Lambda function(s) included to access AWS services. By default, these are scoped down to minimum required permissions. To deploy an AWS CloudFormation stack which creates or modifies IAM roles, the `CAPABILITY_IAM` value for `capabilities` must be provided. If permission isn't provided through this prompt, to deploy this example you must explicitly pass `--capabilities CAPABILITY_IAM` to the `sam deploy` command.
-* **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
+Bash
+sam local start-api
+Evidências e Análise dos Experimentos
+1. Invocação Direta com Payload Válido (HTTP 201)
+Arquivo: evidencias/01-invoke-201.png
 
-You can find your API Gateway Endpoint URL in the output values displayed after deployment.
+Procedimento: Execução direta da função via CLI com sam local invoke HelloWorldFunction -e events/event.json.
 
-## Use the SAM CLI to build and test locally
+Comportamento observado: A função Lambda interpretou o JSON de entrada, processou a requisição hospitalar, gerou o identificador da guia (G-REQ-...) e retornou status HTTP 201 Created.
 
-Build your application with the `sam build --use-container` command.
+Figura 1: Execução local direta da função Lambda com payload válido retornando status 201.
 
-```bash
-rota-vital-serverless$ sam build --use-container
-```
+2. Invocação Direta com Payload Inválido (HTTP 400)
+Arquivo: evidencias/02-invoke-400.png
 
-The SAM CLI installs dependencies defined in `hello_world/requirements.txt`, creates a deployment package, and saves it in the `.aws-sam/build` folder.
+Procedimento: Execução de sam local invoke HelloWorldFunction -e events/event-invalido.json contendo "body": "{}".
 
-Test a single function by invoking it directly with a test event. An event is a JSON document that represents the input that the function receives from the event source. Test events are included in the `events` folder in this project.
+Comportamento observado: A camada de validação rejeitou a requisição por ausência do campo obrigatório requisicaoId, retornando status HTTP 400 Bad Request e impedindo o processamento indevido.
 
-Run functions locally and invoke them with the `sam local invoke` command.
+Figura 2: Rejeição de payload sem requisicaoId via invocação direta retornando status 400.
 
-```bash
-rota-vital-serverless$ sam local invoke HelloWorldFunction --event events/event.json
-```
+3. Estado em Memória (Warm Start) vs. Inicialização a Frio (Cold Start)
+Arquivos: 03a-start-api.png, 03b-estado-warm.png, 03c-coldstart-server.png e 03d-coldstart-client.png
 
-The SAM CLI can also emulate your application's API. Use the `sam local start-api` to run the API locally on port 3000.
+Análise Técnica:
 
-```bash
-rota-vital-serverless$ sam local start-api
-rota-vital-serverless$ curl http://localhost:3000/
-```
+Variáveis declaradas fora do escopo do lambda_handler permanecem alocadas na memória do contêiner enquanto o ambiente de execução estiver ativo (warm). Na primeira chamada HTTP, invocacaoNesteAmbiente retornou 1; na segunda chamada consecutiva, retornou 2.
 
-The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. The `Events` property on each function's definition includes the route and method for each path.
+Ao encerrar o servidor (Ctrl + C) e reiniciar o sam local start-api, um novo contêiner Docker (SAM_CONTAINER_ID) foi provisionado do zero (cold start), reiniciando o contador em memória para 1. Isso evidencia que funções serverless são stateless por arquitetura e não garantem persistência em memória local entre ciclos de vida distintos.
 
-```yaml
-      Events:
-        HelloWorld:
-          Type: Api
-          Properties:
-            Path: /hello
-            Method: get
-```
+Figura 3a: Inicialização do servidor local da API via sam local start-api.
 
-## Add a resource to your application
-The application template uses AWS Serverless Application Model (AWS SAM) to define application resources. AWS SAM is an extension of AWS CloudFormation with a simpler syntax for configuring common serverless application resources such as functions, triggers, and APIs. For resources not included in [the SAM specification](https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md), you can use standard [AWS CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) resource types.
+Figura 3b: Incremento do contador em memória (invocacaoNesteAmbiente passando de 1 para 2) em invocações consecutivas no mesmo contêiner.
 
-## Fetch, tail, and filter Lambda function logs
+Figura 3c: Provisionamento de um novo contêiner (SAM_CONTAINER_ID) após reiniciar a API local.
 
-To simplify troubleshooting, SAM CLI has a command called `sam logs`. `sam logs` lets you fetch logs generated by your deployed Lambda function from the command line. In addition to printing the logs on the terminal, this command has several nifty features to help you quickly find the bug.
+Figura 3d: Sequência demonstrando o contador retornando a 1 após o Cold Start do ambiente.
 
-`NOTE`: This command works for all AWS Lambda functions; not just the ones you deploy using SAM.
+4. Limite de Tempo de Execução (Timeout de 3 Segundos)
+Arquivos: evidencias/04a-timeout-client.png e evidencias/04b-timeout-log.png
 
-```bash
-rota-vital-serverless$ sam logs -n HelloWorldFunction --stack-name "rota-vital-serverless" --tail
-```
+Procedimento: Envio de requisição HTTP POST /guias com "demorar": true para forçar um tempo de processamento superior ao limite Timeout: 3 definido no template.yaml.
 
-You can find more information and examples about filtering Lambda function logs in the [SAM CLI Documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-logging.html).
+Análise Técnica: Exatamente após 3 segundos, o runtime interrompeu forçadamente a execução (Function 'HelloWorldFunction' timed out after 3 seconds), e o API Gateway local retornou {"message":"Internal server error"} ao cliente.
 
-## Tests
+Figura 4a: Resposta Internal server error recebida pelo cliente após exceder o limite de 3 segundos.
 
-Tests are defined in the `tests` folder in this project. Use PIP to install the test dependencies and run tests.
+Figura 4b: Registro nos logs do servidor SAM confirmando o encerramento da função por timeout após 3 segundos.
 
-```bash
-rota-vital-serverless$ pip install -r tests/requirements.txt --user
-# unit test
-rota-vital-serverless$ python -m pytest tests/unit -v
-# integration test, requiring deploying the stack first.
-# Create the env variable AWS_SAM_STACK_NAME with the name of the stack we are testing
-rota-vital-serverless$ AWS_SAM_STACK_NAME="rota-vital-serverless" python -m pytest tests/integration -v
-```
+5. Comportamento de Concorrência
+Arquivo: evidencias/05-concorrencia.png
 
-## Cleanup
+Procedimento: Disparo simultâneo de duas requisições via PowerShell utilizando Start-Job (REQ-1 lenta com demorar: true em segundo plano e REQ-2 imediata em primeiro plano).
 
-To delete the sample application that you created, use the AWS CLI. Assuming you used your project name for the stack name, you can run the following:
+Análise Técnica: Enquanto na nuvem AWS o serviço Lambda escala horizontalmente provisionando instâncias isoladas em paralelo para atender picos simultâneos, a emulação local com sam local start-api processa as requisições em fila no contêiner local: a REQ-2 foi atendida normalmente (G-REQ-2, invocacaoNesteAmbiente: 1) enquanto o Job1 (REQ-1) estourou o timeout de 3 segundos (Internal server error), comprovado pelo comando Receive-Job -Id 1.
 
-```bash
-sam delete --stack-name "rota-vital-serverless"
-```
+Figura 5: Execução concorrente local evidenciando o processamento de REQ-2 e o timeout do Job1 (REQ-1).
 
-## Resources
+6. Validação de Contrato HTTP via API Gateway Local
+Arquivo: evidencias/06-validacao-payload.png
 
-See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
+Procedimento: Envio de POST http://127.0.0.1:3000/guias com corpo JSON vazio ({}).
 
-Next, you can use AWS Serverless Application Repository to deploy ready to use Apps that go beyond hello world samples and learn how authors developed their applications: [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/)
+Análise Técnica: A integração HTTP repassou o evento ao handler Lambda, que validou o contrato de entrada e devolveu o erro semântico {"erro": "requisicaoId obrigatório"} com status HTTP 400 Bad Request.
+
+Figura 6: API retornando erro de validação HTTP 400 ao receber um corpo JSON vazio ({}).
