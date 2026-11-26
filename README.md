@@ -310,7 +310,3 @@ Declaração conforme a política institucional **PO-CESAR-021**.
 | Cinco perguntas respondidas, com a conta de custo | [Seção 6](#6-respostas-às-perguntas) |
 | README, pasta `evidencias/` e vídeo | Seções 4, 5 e vídeo na seção 5 |
 | Seção "Uso de IA" | [Seção 7](#7-uso-de-inteligência-artificial) |
-* **Procedimento:** Envio de `POST http://127.0.0.1:3000/guias` com corpo JSON vazio (`{}`).
-* **Análise Técnica:** A integração HTTP repassou o evento ao handler Lambda, que validou o contrato de entrada e devolveu o erro semântico `{"erro": "requisicaoId obrigatório"}` com status HTTP `400 Bad Request`.
-
-![Evidência 06 - Validação de payload vazio via HTTP](./evidencias/06-validacao-payload.png)
