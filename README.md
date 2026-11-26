@@ -223,9 +223,6 @@ Todos os prints estão na pasta [`evidencias/`](evidencias/).
 | 05 | Concorrência | Chamadas simultâneas em instâncias isoladas | [05-concorrencia.png](evidencias/05-concorrencia.png) |
 | 06 | Validação de payload | Verificação de estrutura e tipos do corpo | [06-validacao-payload.png](evidencias/06-validacao-payload.png) |
 
-> 🎥 **Vídeo demonstrativo (até 3 min):** [INSERIR_LINK_DO_VIDEO]
-> Mostra a invocação por evento, a chamada HTTP e o erro de tempo limite.
-
 ---
 
 ## 6. Respostas às perguntas
